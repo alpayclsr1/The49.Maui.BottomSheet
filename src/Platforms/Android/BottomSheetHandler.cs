@@ -18,12 +18,12 @@ public partial class BottomSheetHandler
 
     partial void PlatformUpdateSelectedDetent(BottomSheet view)
     {
-        // view.Controller.UpdateSelectedDetent();
+         view.Controller.UpdateSelectedDetent();
     }
 
     partial void PlatformMapSelectedDetent(BottomSheet view)
     {
-        // view.Controller.UpdateStateFromDetent();
+        view.Controller.UpdateStateFromDetent();
     }
 
     partial void PlatformUpdateHasBackdrop(BottomSheet view)
