@@ -110,7 +110,7 @@ public class BottomSheetController
 
             _heights[detent] = height;
 
-            Debug.WriteLine($"📏 Detent: {detent.GetType().Name}, Calculated Height: {height}");
+            Console.WriteLine($"📏 Detent: {detent.GetType().Name}, Calculated Height: {height}");
         }
     }
 
@@ -155,7 +155,7 @@ public class BottomSheetController
     internal Detent GetDetentForState(int state)
     {
         var detent = _states.FirstOrDefault(kv => kv.Value == state).Key;
-        Debug.WriteLine($"State: {state}, Detent: {detent}");
+        Console.WriteLine($"State: {state}, Detent: {detent}");
         return detent;
     }
 
@@ -165,7 +165,7 @@ public class BottomSheetController
         if (detent is not null)
         {
             _bottomSheet.SelectedDetent = detent;
-            Debug.WriteLine($"SelectedDetent updated to: {detent}");
+            Console.WriteLine($"SelectedDetent updated to: {detent}");
         }
     }
 
@@ -173,13 +173,13 @@ public class BottomSheetController
     {
         if (_bottomSheet.SelectedDetent is null)
         {
-            Debug.WriteLine("SelectedDetent is null, setting to default.");
+            Console.WriteLine("SelectedDetent is null, setting to default.");
             _bottomSheet.SelectedDetent = _bottomSheet.GetDefaultDetent();
         }
 
         if (_bottomSheetDialog.Behavior is null || _states is null)
         {
-            Debug.WriteLine("Behavior or States is null in UpdateStateFromDetent.");
+            Console.WriteLine("Behavior or States is null in UpdateStateFromDetent.");
             return;
         }
 
@@ -187,7 +187,7 @@ public class BottomSheetController
         if (state != -1)
         {
             _bottomSheetDialog.Behavior.State = state;
-            Debug.WriteLine($"State updated from detent: {state}");
+            Console.WriteLine($"State updated from detent: {state}");
         }
     }
 
@@ -324,18 +324,35 @@ public class BottomSheetController
 
 
 
-    private double CalculateContentHeight()
-    {
-        var contentView = _bottomSheet.ToPlatform(_mauiContext);
-        contentView.Measure((int)MeasureSpecMode.Unspecified, (int)MeasureSpecMode.Unspecified);
-        var density = DeviceDisplay.MainDisplayInfo.Density;
-        var measuredHeight = contentView.MeasuredHeight / density;
-        Debug.WriteLine($"Content height calculated: {measuredHeight}");
-        return measuredHeight;
-    }
+ private double CalculateContentHeight()
+{
+    var density = DeviceDisplay.MainDisplayInfo.Density;
+    var contentView = _bottomSheet.ToPlatform(_mauiContext);
+
+    var displayMetrics = _mauiContext.Context.Resources.DisplayMetrics;
+
+    // Genişlik sınırlı, yükseklik serbest
+    int widthMeasureSpec = Android.Views.View.MeasureSpec.MakeMeasureSpec(displayMetrics.WidthPixels, MeasureSpecMode.AtMost);
+    int heightMeasureSpec = Android.Views.View.MeasureSpec.MakeMeasureSpec(0, MeasureSpecMode.Unspecified);
+
+    contentView.Measure(widthMeasureSpec, heightMeasureSpec);
+
+    var measuredHeight = contentView.MeasuredHeight / density;
+    Console.WriteLine($"📐 Corrected content height: {measuredHeight}");
+    return measuredHeight;
+}
+
+  
+
 
     public void Show(bool animated)
     {
+        var detents = _bottomSheet.GetEnabledDetents().ToList();
+
+        if (detents.Any(d => d is ContentDetent))
+        {
+            _bottomSheet.SelectedDetent = detents.First(d => d is ContentDetent);
+        }
         var inflater = LayoutInflater.From(_mauiContext.Context);
         var rootView = inflater.Inflate(Resource.Layout.the49_maui_bottom_sheet_design, null);
 
@@ -473,13 +490,14 @@ public class BottomSheetController
             var density = DeviceDisplay.MainDisplayInfo.Density;
             var screenHeight = metrics.HeightPixels / density;
             Debug.WriteLine($"Screen height: {screenHeight}");
-
+            /*
             if (_bottomSheet.SelectedDetent is ContentDetent)
             {
                 var contentHeight = CalculateContentHeight();
                 Debug.WriteLine($"Returning content height for ContentDetent: {contentHeight}");
                 return contentHeight;
             }
+            */
             return screenHeight;
         }
 
